@@ -1,0 +1,857 @@
+/* Tailwind CSS */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Importar Angular Material prebuilt theme */
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+/* Estilos globales estilo Trello */
+html, body { 
+  height: 100%; 
+  margin: 0; 
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", Ubuntu, "Droid Sans", "Helvetica Neue", sans-serif;
+  background: linear-gradient(135deg, #00bcd4 0%, #2196f3 25%, #4caf50 50%, #00e676 75%, #18ffff 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Material Design Icons */
+@import 'https://fonts.googleapis.com/icon?family=Material+Icons';
+
+/* Utilidades CSS personalizadas */
+.flex {
+  display: flex !important;
+}
+
+.flex-col {
+  flex-direction: column !important;
+}
+
+.justify-center {
+  justify-content: center !important;
+}
+
+.justify-between {
+  justify-content: space-between !important;
+}
+
+.align-center, .items-center {
+  align-items: center !important;
+}
+
+.text-center {
+  text-align: center !important;
+}
+
+.w-full, .full-width {
+  width: 100% !important;
+}
+
+.h-full {
+  height: 100% !important;
+}
+
+.min-h-screen {
+  min-height: 100vh !important;
+}
+
+.p-4 {
+  padding: 16px !important;
+}
+
+.p-6 {
+  padding: 24px !important;
+}
+
+.p-8 {
+  padding: 32px !important;
+}
+
+.m-4 {
+  margin: 16px !important;
+}
+
+.mb-4 {
+  margin-bottom: 16px !important;
+}
+
+.mt-4 {
+  margin-top: 16px !important;
+}
+
+.space-y-4 > * + * {
+  margin-top: 16px !important;
+}
+
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.rounded-lg {
+  border-radius: 8px !important;
+}
+
+.bg-white {
+  background-color: white !important;
+}
+
+.bg-gray-50 {
+  background-color: #f9fafb !important;
+}
+
+.text-sm {
+  font-size: 0.875rem !important;
+}
+
+.text-lg {
+  font-size: 1.125rem !important;
+}
+
+.text-xl {
+  font-size: 1.25rem !important;
+}
+
+.text-2xl {
+  font-size: 1.5rem !important;
+}
+
+.text-3xl {
+  font-size: 1.875rem !important;
+}
+
+.font-bold {
+  font-weight: 700 !important;
+}
+
+.font-semibold {
+  font-weight: 600 !important;
+}
+
+.text-gray-600 {
+  color: #4b5563 !important;
+}
+
+.text-gray-500 {
+  color: #6b7280 !important;
+}
+
+.text-blue-600 {
+  color: #2563eb !important;
+}
+
+.hover-scale:hover {
+  transform: scale(1.05) !important;
+  transition: transform 0.2s ease-in-out !important;
+}
+
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
+.grid {
+  display: grid !important;
+}
+
+.grid-cols-1 {
+  grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+}
+
+.grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.grid-cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.gap-4 {
+  gap: 16px !important;
+}
+
+.gap-6 {
+  gap: 24px !important;
+}
+
+@media (min-width: 768px) {
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  
+  .md\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lg\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+  
+  .lg\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Estilos específicos para la aplicación estilo Trello */
+.hero-section {
+  background: linear-gradient(135deg, #00bcd4 0%, #4caf50 100%);
+  color: white;
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.feature-card {
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%);
+  border: none;
+  border-radius: 16px;
+  box-shadow: 
+    0 10px 30px rgba(0,0,0,0.1),
+    0 1px 8px rgba(0,0,0,0.2);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  overflow: hidden;
+  position: relative;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  transition: left 0.5s;
+}
+
+.feature-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 
+    0 20px 40px rgba(0,0,0,0.15),
+    0 8px 32px rgba(0,0,0,0.1);
+}
+
+.feature-card:hover::before {
+  left: 100%;
+}
+
+/* Estilos para el dashboard tipo Trello */
+.dashboard-header {
+  background: linear-gradient(135deg, #00bcd4 0%, #2196f3 50%, #4caf50 100%);
+  color: white;
+  padding: 20px 0;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.board-card {
+  background: linear-gradient(145deg, #ffffff 0%, #f0f4ff 100%);
+  border: none;
+  border-radius: 12px;
+  box-shadow: 
+    0 8px 25px rgba(0,0,0,0.08),
+    0 3px 10px rgba(0,0,0,0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.board-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #2196f3, #764ba2, #4caf50, #4facfe);
+}
+
+.board-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 
+    0 15px 35px rgba(0,0,0,0.12),
+    0 6px 20px rgba(0,0,0,0.08);
+}
+
+.new-board-card {
+  background: linear-gradient(145deg, #f8f9ff 0%, #e3f2fd 100%);
+  border: 2px dashed #90caf9;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.new-board-card:hover {
+  background: linear-gradient(145deg, #e3f2fd 0%, #bbdefb 100%);
+  border-color: #42a5f5;
+  transform: scale(1.02);
+  box-shadow: 0 8px 25px rgba(66, 165, 245, 0.2);
+}
+
+/* Estilos para el layout Kanban tipo Trello */
+.kanban-board {
+  display: flex;
+  gap: 20px;
+  padding: 24px;
+  overflow-x: auto;
+  min-height: calc(100vh - 120px);
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 0 0 20px 20px;
+}
+
+.kanban-column {
+  min-width: 320px;
+  background: linear-gradient(145deg, #ffffff 0%, #f8fbff 100%);
+  border-radius: 16px;
+  padding: 20px;
+  max-height: 75vh;
+  overflow-y: auto;
+  box-shadow: 
+    0 10px 30px rgba(0,0,0,0.08),
+    0 2px 8px rgba(0,0,0,0.06);
+  border: 1px solid rgba(255,255,255,0.2);
+  position: relative;
+}
+
+.kanban-column::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(145deg, rgba(255,255,255,0.8) 0%, rgba(248,251,255,0.4) 100%);
+  border-radius: 16px;
+  pointer-events: none;
+}
+
+.kanban-column-header {
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(135deg, #2196f3 0%, #764ba2 100%);
+  color: white;
+  margin: -20px -20px 20px -20px;
+  padding: 16px 20px;
+  border-radius: 16px 16px 0 0;
+  font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.kanban-column h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.kanban-card {
+  background: linear-gradient(145deg, #ffffff 0%, #fafbff 100%);
+  border: none;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 
+    0 6px 20px rgba(0,0,0,0.06),
+    0 2px 8px rgba(0,0,0,0.04);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-left: 4px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.kanban-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #2196f3 0%, #764ba2 50%, #4caf50 100%);
+}
+
+.kanban-card:hover {
+  transform: translateY(-3px) translateX(2px);
+  box-shadow: 
+    0 12px 35px rgba(0,0,0,0.1),
+    0 6px 20px rgba(0,0,0,0.06);
+  border-left-color: #2196f3;
+}
+
+.kanban-card.priority-high::before {
+  background: linear-gradient(180deg, #ff6b6b 0%, #ee5a52 100%);
+}
+
+.kanban-card.priority-medium::before {
+  background: linear-gradient(180deg, #feca57 0%, #ff9ff3 100%);
+}
+
+.kanban-card.priority-low::before {
+  background: linear-gradient(180deg, #48dbfb 0%, #0abde3 100%);
+}
+
+.task-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.task-tag {
+  background: linear-gradient(135deg, #2196f3 0%, #764ba2 100%);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.card-hover {
+  transition: all 0.2s ease-in-out;
+}
+
+.card-hover:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
+}
+
+/* Animaciones suaves */
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Gradientes y efectos avanzados estilo Trello */
+.gradient-bg {
+  background: linear-gradient(135deg, #2196f3 0%, #764ba2 50%, #4caf50 100%);
+  background-size: 300% 300%;
+  animation: gradientFlow 6s ease infinite;
+}
+
+@keyframes gradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.gradient-blue {
+  background: linear-gradient(135deg, #2196f3 0%, #00bcd4 100%);
+}
+
+.gradient-purple {
+  background: linear-gradient(135deg, #00bcd4 0%, #4caf50 100%);
+}
+
+.gradient-pink {
+  background: linear-gradient(135deg, #4caf50 0%, #00e676 100%);
+}
+
+.gradient-cyan {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.glass-effect {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+.neon-glow {
+  box-shadow: 
+    0 0 5px #2196f3,
+    0 0 10px #2196f3,
+    0 0 15px #2196f3,
+    0 0 20px #2196f3;
+}
+
+/* Botones estilo Trello mejorados */
+.btn-primary {
+  background: linear-gradient(135deg, #2196f3 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4c93 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:hover::before {
+  left: 100%;
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #4caf50 0%, #f5576c 100%);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(56, 239, 125, 0.3);
+}
+
+/* Formularios estilo Trello premium */
+.form-container {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 40px;
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%);
+  border-radius: 20px;
+  box-shadow: 
+    0 20px 50px rgba(0,0,0,0.1),
+    0 8px 25px rgba(0,0,0,0.08);
+  border: 1px solid rgba(255,255,255,0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.form-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #2196f3, #764ba2, #4caf50, #4facfe);
+}
+
+.form-field {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 18px;
+  border: 2px solid #e1e5e9;
+  border-radius: 12px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background: linear-gradient(145deg, #ffffff 0%, #fafbff 100%);
+}
+
+.form-input:focus {
+  border-color: #2196f3;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Efectos de partículas y animaciones */
+.floating-particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.particle {
+  position: absolute;
+  background: linear-gradient(45deg, #2196f3, #764ba2);
+  border-radius: 50%;
+  opacity: 0.1;
+  animation: float 6s infinite ease-in-out;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+.wave-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.wave-effect::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 200%;
+  height: 60px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-radius: 50% 50% 0 0;
+  animation: wave 4s ease-in-out infinite;
+}
+
+@keyframes wave {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-10px); }
+}
+
+/* Estilos responsive */
+@media (max-width: 768px) {
+  .kanban-board {
+    flex-direction: column;
+    overflow-x: visible;
+  }
+  
+  .kanban-column {
+    min-width: auto;
+    max-height: none;
+    margin-bottom: 16px;
+  }
+
+  .hero-section {
+    min-height: 40vh;
+    padding: 20px;
+  }
+
+  .form-container {
+    padding: 20px;
+    margin: 16px;
+  }
+}
+
+/* Material Design customizado estilo Trello */
+.mat-mdc-card {
+  border-radius: 16px !important;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08) !important;
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%) !important;
+  border: 1px solid rgba(102, 126, 234, 0.1) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.mat-mdc-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 35px rgba(0,0,0,0.12) !important;
+}
+
+.mat-mdc-button {
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+}
+
+.mat-mdc-raised-button {
+  background: linear-gradient(135deg, #2196f3 0%, #764ba2 100%) !important;
+  color: white !important;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3) !important;
+  transition: all 0.3s ease !important;
+}
+
+.mat-mdc-raised-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4) !important;
+}
+
+.mat-mdc-fab {
+  background: linear-gradient(135deg, #4caf50 0%, #f5576c 100%) !important;
+  box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4) !important;
+}
+
+.mdc-text-field {
+  border-radius: 12px !important;
+}
+
+.mat-mdc-form-field {
+  width: 100%;
+}
+
+.mdc-text-field--filled {
+  background: linear-gradient(145deg, #ffffff 0%, #fafbff 100%) !important;
+  border-radius: 12px 12px 0 0 !important;
+}
+
+.mdc-text-field--filled:hover {
+  background: linear-gradient(145deg, #f8f9ff 0%, #f0f4ff 100%) !important;
+}
+
+.mat-mdc-menu-panel {
+  border-radius: 12px !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%) !important;
+}
+
+.mat-toolbar {
+  background: linear-gradient(135deg, #2196f3 0%, #764ba2 50%, #4caf50 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3) !important;
+}
+
+/* Scrollbars personalizados estilo Trello */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.05);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #2196f3 0%, #764ba2 100%);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4c93 100%);
+  background-clip: content-box;
+}
+
+/* Efectos especiales para elementos interactivos */
+.interactive-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.interactive-hover:hover {
+  transform: scale(1.02) translateY(-2px);
+  filter: brightness(1.1);
+}
+
+.pulse-effect {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.shimmer-effect {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Efectos de carga modernos */
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(102, 126, 234, 0.1);
+  border-left: 4px solid #2196f3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Tipografía mejorada estilo Trello */
+.title-gradient {
+  background: linear-gradient(135deg, #2196f3 0%, #764ba2 50%, #4caf50 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+}
+
+.subtitle-modern {
+  color: #6b7280;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+/* Estados de notificación modernos */
+.notification-success {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+  padding: 16px 24px;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(56, 239, 125, 0.3);
+}
+
+.notification-error {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+  color: white;
+  padding: 16px 24px;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+}
+
+.notification-warning {
+  background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%);
+  color: white;
+  padding: 16px 24px;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(254, 202, 87, 0.3);
+}
