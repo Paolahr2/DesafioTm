@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskManager API - Swagger</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .link-box {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            transition: transform 0.3s ease;
+        }
+        .link-box:hover {
+            transform: scale(1.05);
+        }
+        a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .status {
+            margin-top: 30px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: rgba(76, 175, 80, 0.3);
+        }
+        .error {
+            background-color: rgba(244, 67, 54, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 TaskManager API</h1>
+        <p>La API está funcionando correctamente!</p>
+        
+        <div class="link-box">
+            <a href="http://localhost:5000/swagger" target="_blank">
+                📖 Abrir Swagger UI
+            </a>
+        </div>
+        
+        <div class="link-box">
+            <a href="http://localhost:5000/" target="_blank">
+                🏠 Página Principal
+            </a>
+        </div>
+        
+        <div class="link-box">
+            <a href="http://localhost:5000/health" target="_blank">
+                ❤️ Health Check
+            </a>
+        </div>
+        
+        <div class="link-box">
+            <a href="http://localhost:5000/api/test" target="_blank">
+                🧪 Test API
+            </a>
+        </div>
+
+        <div id="status" class="status">
+            <p>✅ Servidor corriendo en: http://localhost:5000</p>
+        </div>
+    </div>
+
+    <script>
+        // Auto-abrir Swagger después de 3 segundos
+        setTimeout(() => {
+            window.open('http://localhost:5000/swagger', '_blank');
+        }, 3000);
+
+        // Verificar estado de la API
+        fetch('http://localhost:5000/health')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('status').className = 'status success';
+                document.getElementById('status').innerHTML = `
+                    <p>✅ API funcionando correctamente</p>
+                    <p>Último check: ${new Date().toLocaleString()}</p>
+                `;
+            })
+            .catch(error => {
+                document.getElementById('status').className = 'status error';
+                document.getElementById('status').innerHTML = `
+                    <p>❌ Error conectando con la API</p>
+                    <p>Asegúrate de que el servidor esté funcionando</p>
+                `;
+            });
+    </script>
+</body>
+</html>

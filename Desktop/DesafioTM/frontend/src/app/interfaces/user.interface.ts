@@ -8,7 +8,7 @@ export interface User {
 }
 
 export interface LoginData {
-  email: string;
+  emailOrUsername: string;
   password: string;
 }
 

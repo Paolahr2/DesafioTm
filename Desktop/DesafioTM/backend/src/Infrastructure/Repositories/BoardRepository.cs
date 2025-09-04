@@ -1,126 +1,180 @@
-using MongoDB.Driver;
 using Domain.Entities;
 using Domain.Interfaces;
-using Infrastructure.Data;
-using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace Infrastructure.Repositories;
 
-/// <summary>
-/// Implementación concreta del repositorio de tableros para MongoDB
-/// </summary>
-public class BoardRepository : BaseRepository<Board>, IBoardRepository
+public class BoardRepository : GenericRepository<Board>, Domain.Interfaces.BoardRepository
 {
-    public BoardRepository(MongoDbContext context) 
-        : base(context, ctx => ctx.Boards)
+    public BoardRepository(IMongoDatabase database) : base(database, "boards")
     {
+        // Crear índices
+        CreateIndexes();
+    }
+
+    public async Task<IEnumerable<Board>> GetUserBoardsAsync(string userId)
+    {
+        var filter = Builders<Board>.Filter.Or(
+            Builders<Board>.Filter.Eq(x => x.OwnerId, userId),
+            Builders<Board>.Filter.AnyEq(x => x.MemberIds, userId)
+        );
+
+        return await _collection.Find(filter).SortByDescending(x => x.UpdatedAt).ToListAsync();
+    }
+
+    public async Task<IEnumerable<Board>> GetPublicBoardsAsync(int page = 1, int pageSize = 10)
+    {
+        var filter = Builders<Board>.Filter.And(
+            Builders<Board>.Filter.Eq(x => x.IsPublic, true),
+            Builders<Board>.Filter.Eq(x => x.IsArchived, false)
+        );
+
+        return await _collection.Find(filter)
+            .SortByDescending(x => x.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Limit(pageSize)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<Board>> GetBoardsByOwnerAsync(string ownerId)
     {
-        var filter = Builders<Board>.Filter.Eq(b => b.OwnerId, ownerId);
-        var sort = Builders<Board>.Sort.Descending(b => b.UpdatedAt);
-        return await _collection.Find(filter).Sort(sort).ToListAsync();
+        return await _collection.Find(x => x.OwnerId == ownerId)
+            .SortByDescending(x => x.UpdatedAt)
+            .ToListAsync();
     }
 
-    public async Task<IEnumerable<Board>> GetBoardsByMemberAsync(string userId)
+    public async Task<IEnumerable<Board>> GetBoardsByOwnerIdAsync(string ownerId)
     {
-        var filter = Builders<Board>.Filter.AnyEq(b => b.Members, userId);
-        var sort = Builders<Board>.Sort.Descending(b => b.UpdatedAt);
-        return await _collection.Find(filter).Sort(sort).ToListAsync();
+        return await GetBoardsByOwnerAsync(ownerId);
     }
 
-    public async Task<IEnumerable<Board>> GetAccessibleBoardsAsync(string userId)
+    public async Task<IEnumerable<Board>> GetBoardsByMemberIdAsync(string memberId)
     {
-        var ownerFilter = Builders<Board>.Filter.Eq(b => b.OwnerId, userId);
-        var memberFilter = Builders<Board>.Filter.AnyEq(b => b.Members, userId);
-        var combinedFilter = Builders<Board>.Filter.Or(ownerFilter, memberFilter);
-        
-        var sort = Builders<Board>.Sort.Descending(b => b.UpdatedAt);
-        return await _collection.Find(combinedFilter).Sort(sort).ToListAsync();
-    }
-
-    public async Task<IEnumerable<Board>> SearchBoardsAsync(string searchTerm, string userId)
-    {
-        var searchFilter = CreateTextSearchFilter(searchTerm, "Name", "Description");
-        var accessFilter = Builders<Board>.Filter.Or(
-            Builders<Board>.Filter.Eq(b => b.OwnerId, userId),
-            Builders<Board>.Filter.AnyEq(b => b.Members, userId)
-        );
-        
-        var combinedFilter = Builders<Board>.Filter.And(searchFilter, accessFilter);
-        return await _collection.Find(combinedFilter).ToListAsync();
+        return await _collection.Find(x => x.MemberIds.Contains(memberId))
+            .SortByDescending(x => x.UpdatedAt)
+            .ToListAsync();
     }
 
     public async Task<bool> UserHasAccessAsync(string boardId, string userId)
     {
-        if (!ObjectId.TryParse(boardId, out _))
-            return false;
+        return await IsMemberAsync(boardId, userId);
+    }
 
+    public async Task<bool> AddMemberAsync(string boardId, string userId)
+    {
+        var filter = Builders<Board>.Filter.Eq(x => x.Id, boardId);
+        var update = Builders<Board>.Update
+            .AddToSet(x => x.MemberIds, userId)
+            .Set(x => x.UpdatedAt, DateTime.UtcNow);
+
+        var result = await _collection.UpdateOneAsync(filter, update);
+        return result.ModifiedCount > 0;
+    }
+
+    public async Task<bool> RemoveMemberAsync(string boardId, string userId)
+    {
+        var filter = Builders<Board>.Filter.Eq(x => x.Id, boardId);
+        var update = Builders<Board>.Update
+            .Pull(x => x.MemberIds, userId)
+            .Set(x => x.UpdatedAt, DateTime.UtcNow);
+
+        var result = await _collection.UpdateOneAsync(filter, update);
+        return result.ModifiedCount > 0;
+    }
+
+    public async Task<bool> IsMemberAsync(string boardId, string userId)
+    {
         var filter = Builders<Board>.Filter.And(
-            Builders<Board>.Filter.Eq("_id", ObjectId.Parse(boardId)),
+            Builders<Board>.Filter.Eq(x => x.Id, boardId),
             Builders<Board>.Filter.Or(
-                Builders<Board>.Filter.Eq(b => b.OwnerId, userId),
-                Builders<Board>.Filter.AnyEq(b => b.Members, userId)
+                Builders<Board>.Filter.Eq(x => x.OwnerId, userId),
+                Builders<Board>.Filter.AnyEq(x => x.MemberIds, userId)
             )
         );
 
-        var count = await _collection.CountDocumentsAsync(filter, new CountOptions { Limit = 1 });
+        var count = await _collection.CountDocumentsAsync(filter);
         return count > 0;
     }
 
-    public async Task<IEnumerable<User>> GetBoardMembersAsync(string boardId)
+    public async Task<IEnumerable<Board>> SearchBoardsAsync(string searchTerm, string? userId = null)
     {
-        var board = await GetByIdAsync(boardId);
-        if (board == null) return new List<User>();
-
-        var userFilter = Builders<User>.Filter.In(u => u.Id, board.Members);
-        return await _context.Users.Find(userFilter).ToListAsync();
-    }
-
-    public async Task<IEnumerable<Board>> GetActiveBoardsAsync(string userId)
-    {
-        var accessFilter = Builders<Board>.Filter.Or(
-            Builders<Board>.Filter.Eq(b => b.OwnerId, userId),
-            Builders<Board>.Filter.AnyEq(b => b.Members, userId)
-        );
-        var activeFilter = Builders<Board>.Filter.Eq(b => b.IsActive, true);
-        var combinedFilter = Builders<Board>.Filter.And(accessFilter, activeFilter);
-        
-        var sort = Builders<Board>.Sort.Descending(b => b.UpdatedAt);
-        return await _collection.Find(combinedFilter).Sort(sort).ToListAsync();
-    }
-
-    public async Task<bool> BoardNameExistsAsync(string name, string ownerId, string? excludeBoardId = null)
-    {
-        var filter = Builders<Board>.Filter.And(
-            Builders<Board>.Filter.Eq(b => b.Name, name),
-            Builders<Board>.Filter.Eq(b => b.OwnerId, ownerId)
+        var searchFilter = Builders<Board>.Filter.Or(
+            Builders<Board>.Filter.Regex(x => x.Title, new MongoDB.Bson.BsonRegularExpression(searchTerm, "i")),
+            Builders<Board>.Filter.Regex(x => x.Description, new MongoDB.Bson.BsonRegularExpression(searchTerm, "i"))
         );
 
-        if (!string.IsNullOrEmpty(excludeBoardId) && ObjectId.TryParse(excludeBoardId, out _))
+        FilterDefinition<Board> accessFilter;
+        if (!string.IsNullOrEmpty(userId))
         {
-            var excludeFilter = Builders<Board>.Filter.Ne("_id", ObjectId.Parse(excludeBoardId));
-            filter = Builders<Board>.Filter.And(filter, excludeFilter);
+            // Usuario puede ver: tableros públicos, propios o donde es miembro
+            accessFilter = Builders<Board>.Filter.Or(
+                Builders<Board>.Filter.Eq(x => x.IsPublic, true),
+                Builders<Board>.Filter.Eq(x => x.OwnerId, userId),
+                Builders<Board>.Filter.AnyEq(x => x.MemberIds, userId)
+            );
+        }
+        else
+        {
+            // Solo tableros públicos para usuarios no autenticados
+            accessFilter = Builders<Board>.Filter.Eq(x => x.IsPublic, true);
         }
 
-        var count = await _collection.CountDocumentsAsync(filter, new CountOptions { Limit = 1 });
-        return count > 0;
+        var combinedFilter = Builders<Board>.Filter.And(searchFilter, accessFilter);
+
+        return await _collection.Find(combinedFilter)
+            .SortByDescending(x => x.UpdatedAt)
+            .Limit(20)
+            .ToListAsync();
     }
 
-    public async Task<Dictionary<string, object>> GetBoardStatisticsAsync(string boardId)
+    private void CreateIndexes()
     {
-        var tasks = await _context.Tasks.Find(t => t.BoardId == boardId).ToListAsync();
-        
-        var stats = new Dictionary<string, object>
+        try
         {
-            ["TotalTasks"] = tasks.Count,
-            ["CompletedTasks"] = tasks.Count(t => t.Status == Domain.Enums.TaskStatus.Completed),
-            ["InProgressTasks"] = tasks.Count(t => t.Status == Domain.Enums.TaskStatus.InProgress),
-            ["TodoTasks"] = tasks.Count(t => t.Status == Domain.Enums.TaskStatus.Todo),
-            ["OverdueTasks"] = tasks.Count(t => t.IsOverdue())
-        };
+            // Obtener índices existentes
+            var existingIndexes = _collection.Indexes.List().ToList();
+            var indexNames = existingIndexes.Select(idx => idx["name"].AsString).ToList();
 
-        return stats;
+            // Crear índice para owner solo si no existe
+            if (!indexNames.Any(name => name.Contains("owner") || name.Contains("Owner")))
+            {
+                var ownerIndexKeys = Builders<Board>.IndexKeys.Ascending(x => x.OwnerId);
+                var ownerIndexOptions = new CreateIndexOptions { Name = "idx_board_owner" };
+                var ownerIndexModel = new CreateIndexModel<Board>(ownerIndexKeys, ownerIndexOptions);
+                _collection.Indexes.CreateOne(ownerIndexModel);
+            }
+
+            // Crear índice para tableros públicos solo si no existe
+            if (!indexNames.Any(name => name.Contains("public") || name.Contains("Public")))
+            {
+                var publicIndexKeys = Builders<Board>.IndexKeys.Ascending(x => x.IsPublic);
+                var publicIndexOptions = new CreateIndexOptions { Name = "idx_board_public" };
+                var publicIndexModel = new CreateIndexModel<Board>(publicIndexKeys, publicIndexOptions);
+                _collection.Indexes.CreateOne(publicIndexModel);
+            }
+
+            // Crear índice para miembros solo si no existe
+            if (!indexNames.Any(name => name.Contains("member") || name.Contains("Member")))
+            {
+                var membersIndexKeys = Builders<Board>.IndexKeys.Ascending(x => x.MemberIds);
+                var membersIndexOptions = new CreateIndexOptions { Name = "idx_board_members" };
+                var membersIndexModel = new CreateIndexModel<Board>(membersIndexKeys, membersIndexOptions);
+                _collection.Indexes.CreateOne(membersIndexModel);
+            }
+
+            // Crear índice de texto solo si no existe
+            if (!indexNames.Any(name => name.Contains("text") || name.Contains("Text")))
+            {
+                var textIndexKeys = Builders<Board>.IndexKeys.Text(x => x.Title).Text(x => x.Description);
+                var textIndexOptions = new CreateIndexOptions { Name = "idx_board_text" };
+                var textIndexModel = new CreateIndexModel<Board>(textIndexKeys, textIndexOptions);
+                _collection.Indexes.CreateOne(textIndexModel);
+            }
+        }
+        catch (Exception)
+        {
+            // Si hay algún error creando índices, continuar sin fallar
+            // Los índices se pueden crear manualmente en MongoDB si es necesario
+        }
     }
 }

@@ -1,151 +1,161 @@
-using MongoDB.Driver;
 using Domain.Entities;
-using Domain.Interfaces;
 using Domain.Enums;
-using Infrastructure.Data;
-using MongoDB.Bson;
+using Domain.Interfaces;
+using MongoDB.Driver;
 
 namespace Infrastructure.Repositories;
 
-/// <summary>
-/// Implementación concreta del repositorio de tareas para MongoDB
-/// </summary>
-public class TaskRepository : BaseRepository<TaskItem>, ITaskRepository
+public class TaskRepository : GenericRepository<TaskItem>, Domain.Interfaces.TaskRepository
 {
-    public TaskRepository(MongoDbContext context) 
-        : base(context, ctx => ctx.Tasks)
+    public TaskRepository(IMongoDatabase database) : base(database, "tasks")
     {
+        // Crear índices
+        CreateIndexes();
     }
 
     public async Task<IEnumerable<TaskItem>> GetTasksByBoardIdAsync(string boardId)
     {
-        var filter = Builders<TaskItem>.Filter.Eq(t => t.BoardId, boardId);
-        var sort = Builders<TaskItem>.Sort.Ascending(t => t.Position);
-        return await _collection.Find(filter).Sort(sort).ToListAsync();
+        return await _collection.Find(x => x.BoardId == boardId)
+            .SortBy(x => x.CreatedAt)
+            .ToListAsync();
     }
 
-    public async Task<IEnumerable<TaskItem>> GetTasksByStatusAsync(string boardId, Domain.Enums.TaskStatus status)
+    public async Task<IEnumerable<TaskItem>> GetByBoardIdAsync(string boardId)
     {
-        var filter = Builders<TaskItem>.Filter.And(
-            Builders<TaskItem>.Filter.Eq(t => t.BoardId, boardId),
-            Builders<TaskItem>.Filter.Eq(t => t.Status, status)
-        );
-        var sort = Builders<TaskItem>.Sort.Ascending(t => t.Position);
-        return await _collection.Find(filter).Sort(sort).ToListAsync();
+        return await GetTasksByBoardIdAsync(boardId);
     }
 
     public async Task<IEnumerable<TaskItem>> GetTasksByAssignedUserAsync(string userId)
     {
-        var filter = Builders<TaskItem>.Filter.Eq(t => t.AssignedTo, userId);
-        var sort = Builders<TaskItem>.Sort.Descending(t => t.UpdatedAt);
-        return await _collection.Find(filter).Sort(sort).ToListAsync();
+        return await _collection.Find(x => x.AssignedToId == userId)
+            .SortBy(x => x.DueDate ?? DateTime.MaxValue)
+            .ToListAsync();
     }
 
-    public async Task<IEnumerable<TaskItem>> GetTasksByCreatorAsync(string userId)
+    public async Task<IEnumerable<TaskItem>> GetByAssignedUserAsync(string userId)
     {
-        var filter = Builders<TaskItem>.Filter.Eq(t => t.CreatedBy, userId);
-        var sort = Builders<TaskItem>.Sort.Descending(t => t.CreatedAt);
-        return await _collection.Find(filter).Sort(sort).ToListAsync();
+        return await GetTasksByAssignedUserAsync(userId);
     }
 
-    public async Task<IEnumerable<TaskItem>> SearchTasksAsync(string searchTerm, string? boardId = null)
+    public async Task<IEnumerable<TaskItem>> GetByCreatorAsync(string userId)
     {
-        var searchFilter = CreateTextSearchFilter(searchTerm, "Title", "Description");
-        
-        if (!string.IsNullOrEmpty(boardId))
-        {
-            var boardFilter = Builders<TaskItem>.Filter.Eq(t => t.BoardId, boardId);
-            searchFilter = Builders<TaskItem>.Filter.And(searchFilter, boardFilter);
-        }
-
-        return await _collection.Find(searchFilter).ToListAsync();
+        return await _collection.Find(x => x.CreatedById == userId)
+            .SortByDescending(x => x.CreatedAt)
+            .ToListAsync();
     }
 
-    public async Task<IEnumerable<TaskItem>> GetTasksDueSoonAsync(int days = 3)
+    public async Task<IEnumerable<TaskItem>> GetTasksByStatusAsync(string boardId, Domain.Enums.TaskStatus status)
     {
-        var futureDate = DateTime.UtcNow.AddDays(days);
-        var filter = Builders<TaskItem>.Filter.And(
-            Builders<TaskItem>.Filter.Lte(t => t.DueDate, futureDate),
-            Builders<TaskItem>.Filter.Gte(t => t.DueDate, DateTime.UtcNow),
-            Builders<TaskItem>.Filter.Ne(t => t.Status, Domain.Enums.TaskStatus.Completed)
-        );
-
-        return await _collection.Find(filter).ToListAsync();
+        return await _collection.Find(x => x.BoardId == boardId && x.Status == status)
+            .SortBy(x => x.CreatedAt)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<TaskItem>> GetOverdueTasksAsync()
     {
         var filter = Builders<TaskItem>.Filter.And(
-            Builders<TaskItem>.Filter.Lt(t => t.DueDate, DateTime.UtcNow),
-            Builders<TaskItem>.Filter.Ne(t => t.Status, Domain.Enums.TaskStatus.Completed)
+            Builders<TaskItem>.Filter.Lt(x => x.DueDate, DateTime.UtcNow),
+            Builders<TaskItem>.Filter.Ne(x => x.Status, Domain.Enums.TaskStatus.Done)
         );
 
-        return await _collection.Find(filter).ToListAsync();
+        return await _collection.Find(filter)
+            .SortBy(x => x.DueDate)
+            .ToListAsync();
     }
 
-    public async Task<IEnumerable<TaskItem>> GetTasksByTagAsync(string tag, string? boardId = null)
+    public async Task<IEnumerable<TaskItem>> SearchTasksAsync(string searchTerm, string userId)
     {
-        var tagFilter = Builders<TaskItem>.Filter.AnyEq(t => t.Tags, tag);
-        
-        if (!string.IsNullOrEmpty(boardId))
-        {
-            var boardFilter = Builders<TaskItem>.Filter.Eq(t => t.BoardId, boardId);
-            tagFilter = Builders<TaskItem>.Filter.And(tagFilter, boardFilter);
-        }
+        // Buscar tareas en tableros donde el usuario tiene acceso
+        var searchFilter = Builders<TaskItem>.Filter.Or(
+            Builders<TaskItem>.Filter.Regex(x => x.Title, new MongoDB.Bson.BsonRegularExpression(searchTerm, "i")),
+            Builders<TaskItem>.Filter.Regex(x => x.Description, new MongoDB.Bson.BsonRegularExpression(searchTerm, "i")),
+            Builders<TaskItem>.Filter.AnyEq(x => x.Tags, searchTerm)
+        );
 
-        return await _collection.Find(tagFilter).ToListAsync();
+        // Para simplicidad, buscar en tareas creadas por el usuario o asignadas a él
+        var userFilter = Builders<TaskItem>.Filter.Or(
+            Builders<TaskItem>.Filter.Eq(x => x.CreatedById, userId),
+            Builders<TaskItem>.Filter.Eq(x => x.AssignedToId, userId)
+        );
+
+        var combinedFilter = Builders<TaskItem>.Filter.And(searchFilter, userFilter);
+
+        return await _collection.Find(combinedFilter)
+            .SortByDescending(x => x.UpdatedAt)
+            .Limit(50)
+            .ToListAsync();
     }
 
-    public async Task<IEnumerable<TaskItem>> GetTasksByPriorityAsync(TaskPriority priority, string? boardId = null)
+    public async Task<int> GetTaskCountByBoardAsync(string boardId)
     {
-        var priorityFilter = Builders<TaskItem>.Filter.Eq(t => t.Priority, priority);
-        
-        if (!string.IsNullOrEmpty(boardId))
-        {
-            var boardFilter = Builders<TaskItem>.Filter.Eq(t => t.BoardId, boardId);
-            priorityFilter = Builders<TaskItem>.Filter.And(priorityFilter, boardFilter);
-        }
-
-        return await _collection.Find(priorityFilter).ToListAsync();
+        var count = await _collection.CountDocumentsAsync(x => x.BoardId == boardId);
+        return (int)count;
     }
 
-    public async Task<bool> UpdateTaskPositionsAsync(Dictionary<string, int> taskPositions)
+    private void CreateIndexes()
     {
-        var bulkOps = new List<WriteModel<TaskItem>>();
-
-        foreach (var kvp in taskPositions)
+        try
         {
-            if (ObjectId.TryParse(kvp.Key, out _))
+            // Obtener índices existentes
+            var existingIndexes = _collection.Indexes.List().ToList();
+            var indexNames = existingIndexes.Select(idx => idx["name"].AsString).ToList();
+
+            // Crear índices solo si no existen
+            if (!indexNames.Any(name => name.Contains("board") || name.Contains("Board")))
             {
-                var filter = Builders<TaskItem>.Filter.Eq("_id", ObjectId.Parse(kvp.Key));
-                var update = Builders<TaskItem>.Update
-                    .Set(t => t.Position, kvp.Value)
-                    .Set(t => t.UpdatedAt, DateTime.UtcNow);
-                
-                bulkOps.Add(new UpdateOneModel<TaskItem>(filter, update));
+                var boardIndexKeys = Builders<TaskItem>.IndexKeys.Ascending(x => x.BoardId);
+                var boardIndexOptions = new CreateIndexOptions { Name = "idx_task_board" };
+                var boardIndexModel = new CreateIndexModel<TaskItem>(boardIndexKeys, boardIndexOptions);
+                _collection.Indexes.CreateOne(boardIndexModel);
+            }
+
+            if (!indexNames.Any(name => name.Contains("assigned") || name.Contains("Assigned")))
+            {
+                var assignedIndexKeys = Builders<TaskItem>.IndexKeys.Ascending(x => x.AssignedToId);
+                var assignedIndexOptions = new CreateIndexOptions { Name = "idx_task_assigned" };
+                var assignedIndexModel = new CreateIndexModel<TaskItem>(assignedIndexKeys, assignedIndexOptions);
+                _collection.Indexes.CreateOne(assignedIndexModel);
+            }
+
+            if (!indexNames.Any(name => name.Contains("creator") || name.Contains("Creator")))
+            {
+                var creatorIndexKeys = Builders<TaskItem>.IndexKeys.Ascending(x => x.CreatedById);
+                var creatorIndexOptions = new CreateIndexOptions { Name = "idx_task_creator" };
+                var creatorIndexModel = new CreateIndexModel<TaskItem>(creatorIndexKeys, creatorIndexOptions);
+                _collection.Indexes.CreateOne(creatorIndexModel);
+            }
+
+            if (!indexNames.Any(name => name.Contains("duedate") || name.Contains("DueDate")))
+            {
+                var dueDateIndexKeys = Builders<TaskItem>.IndexKeys.Ascending(x => x.DueDate);
+                var dueDateIndexOptions = new CreateIndexOptions { Name = "idx_task_duedate" };
+                var dueDateIndexModel = new CreateIndexModel<TaskItem>(dueDateIndexKeys, dueDateIndexOptions);
+                _collection.Indexes.CreateOne(dueDateIndexModel);
+            }
+
+            if (!indexNames.Any(name => name.Contains("status") || name.Contains("Status")))
+            {
+                var statusIndexKeys = Builders<TaskItem>.IndexKeys.Ascending(x => x.Status);
+                var statusIndexOptions = new CreateIndexOptions { Name = "idx_task_status" };
+                var statusIndexModel = new CreateIndexModel<TaskItem>(statusIndexKeys, statusIndexOptions);
+                _collection.Indexes.CreateOne(statusIndexModel);
+            }
+
+            if (!indexNames.Any(name => name.Contains("text") || name.Contains("Text")))
+            {
+                var textIndexKeys = Builders<TaskItem>.IndexKeys
+                    .Text(x => x.Title)
+                    .Text(x => x.Description)
+                    .Text(x => x.Tags);
+                var textIndexOptions = new CreateIndexOptions { Name = "idx_task_text" };
+                var textIndexModel = new CreateIndexModel<TaskItem>(textIndexKeys, textIndexOptions);
+                _collection.Indexes.CreateOne(textIndexModel);
             }
         }
-
-        if (bulkOps.Count == 0) return false;
-
-        var result = await _collection.BulkWriteAsync(bulkOps);
-        return result.ModifiedCount == bulkOps.Count;
-    }
-
-    public async Task<Dictionary<Domain.Enums.TaskStatus, int>> GetTaskStatisticsAsync(string boardId)
-    {
-        var filter = Builders<TaskItem>.Filter.Eq(t => t.BoardId, boardId);
-        var tasks = await _collection.Find(filter).ToListAsync();
-
-        return tasks
-            .GroupBy(t => t.Status)
-            .ToDictionary(g => g.Key, g => g.Count());
-    }
-
-    public async Task<int> DeleteTasksByBoardIdAsync(string boardId)
-    {
-        var filter = Builders<TaskItem>.Filter.Eq(t => t.BoardId, boardId);
-        var result = await _collection.DeleteManyAsync(filter);
-        return (int)result.DeletedCount;
+        catch (Exception)
+        {
+            // Si hay algún error creando índices, continuar sin fallar
+            // Los índices se pueden crear manualmente en MongoDB si es necesario
+        }
     }
 }

@@ -1,33 +1,52 @@
 namespace Infrastructure.Configuration;
 
 /// <summary>
-/// Clase de configuración para los settings de la base de datos
-/// Mapea la sección "DatabaseSettings" del appsettings.json
-/// Implementa el patrón Options para inyección de dependencias
+/// Configuración de la base de datos
 /// </summary>
 public class DatabaseSettings
 {
-    /// <summary>
-    /// Nombre de la base de datos en MongoDB
-    /// Por defecto "tasksmanagerbd" según los requerimientos
-    /// </summary>
-    public string DatabaseName { get; set; } = "tasksmanagerbd";
+    public string ConnectionString { get; set; } = string.Empty;
+    public string DatabaseName { get; set; } = string.Empty;
+    
+    // Nombres de colecciones
+    public string UsersCollectionName { get; set; } = "users";
+    public string BoardsCollectionName { get; set; } = "boards";
+    public string TasksCollectionName { get; set; } = "tasks";
+    public string NotificationsCollectionName { get; set; } = "notifications";
+}
 
+/// <summary>
+/// Configuración de índices para MongoDB
+/// </summary>
+public static class DatabaseIndexes
+{
     /// <summary>
-    /// Nombre de la colección de usuarios en MongoDB
-    /// Almacena todos los usuarios del sistema
+    /// Nombres de índices para optimizar consultas
     /// </summary>
-    public string UsersCollection { get; set; } = "users";
+    public static class Users
+    {
+        public const string EmailIndex = "email_unique";
+        public const string UsernameIndex = "username_unique";
+    }
 
-    /// <summary>
-    /// Nombre de la colección de tareas en MongoDB
-    /// Almacena todas las tareas del sistema Kanban
-    /// </summary>
-    public string TasksCollection { get; set; } = "tasks";
+    public static class Boards
+    {
+        public const string OwnerIndex = "owner_id";
+        public const string PublicIndex = "is_public";
+    }
 
-    /// <summary>
-    /// Nombre de la colección de tableros en MongoDB
-    /// Almacena todos los tableros Kanban del sistema
-    /// </summary>
-    public string BoardsCollection { get; set; } = "boards";
+    public static class Tasks
+    {
+        public const string BoardIndex = "board_id";
+        public const string AssignedToIndex = "assigned_to";
+        public const string StatusIndex = "status";
+        public const string DueDateIndex = "due_date";
+    }
+
+    public static class Notifications
+    {
+        public const string UserIndex = "user_id";
+        public const string ReadIndex = "is_read";
+        public const string CreatedAtIndex = "created_at";
+    }
 }

@@ -50,9 +50,9 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
-            "MongoDB.Driver": {
+            "MongoDB.Bson": {
               "target": "Package",
-              "version": "[3.4.3, )"
+              "version": "[2.21.0, )"
             }
           },
           "imports": [

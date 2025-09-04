@@ -10,7 +10,7 @@ import { LoginData, RegisterData, AuthResponse, User } from '../interfaces/user.
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:5064/api';
+  private apiUrl = 'http://localhost:5000/api';
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
