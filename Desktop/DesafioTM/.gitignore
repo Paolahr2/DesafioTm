@@ -49,6 +49,26 @@ logs/
 # VS Code
 .vscode/
 
+# Temporary and backup files
+*.tmp
+*.temp
+*.bak
+*.backup
+*temp*
+*copy*
+*old*
+
+# Development test files
+test-*
+*test.json
+*test.html
+*demo.html
+valid-*.json
+invalid-*.json
+
+# Package manager lock files
+package-lock.json
+
 # OS generated files
 .DS_Store
 .DS_Store?

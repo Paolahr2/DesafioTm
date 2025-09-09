@@ -41,7 +41,12 @@ public class AuthController : ControllerBase
     {
         try
         {
-            var command = new RegisterCommand(request);
+            var command = new RegisterCommand(
+                request.Username,
+                request.Email, 
+                request.Password,
+                $"{request.FirstName} {request.LastName}".Trim()
+            );
             var result = await _mediator.Send(command);
             return Ok(result);
         }
@@ -51,4 +56,3 @@ public class AuthController : ControllerBase
         }
     }
 }
- 

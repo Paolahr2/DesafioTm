@@ -7,11 +7,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace Presentation.Controllers;
+namespace TaskManager.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/tasks")]
 [Authorize]
+[Tags("Tasks")]
 public class TasksController : ControllerBase
 {
     private readonly IMediator _mediator;

@@ -1,9 +1,14 @@
-using Application.DTOs.Auth;
+// ============================================================================
+// LOGIN COMMAND - CLEAN ARCHITECTURE
+// ============================================================================
+
 using MediatR;
+using Application.DTOs;
 
-namespace Application.Commands.Auth;
-
-/// <summary>
-/// Comando para autenticar un usuario en el sistema
-/// </summary>
-public record LoginCommand(string EmailOrUsername, string Password) : IRequest<AuthResponseDto>;
+namespace Application.Commands.Auth
+{
+    public record LoginCommand(
+        string EmailOrUsername, 
+        string Password
+    ) : IRequest<LoginResultDto>;
+}

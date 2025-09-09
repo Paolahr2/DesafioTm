@@ -1,9 +1,16 @@
-using Application.DTOs.Auth;
+// ============================================================================
+// REGISTER COMMAND - CLEAN ARCHITECTURE
+// ============================================================================
+
 using MediatR;
+using Application.DTOs;
 
-namespace Application.Commands.Auth;
-
-/// <summary>
-/// Comando para registrar un nuevo usuario en el sistema
-/// </summary>
-public record RegisterCommand(RegisterRequestDto Request) : IRequest<AuthResponseDto>;
+namespace Application.Commands.Auth
+{
+    public record RegisterCommand(
+        string Username,
+        string Email, 
+        string Password,
+        string FullName
+    ) : IRequest<RegisterResultDto>;
+}

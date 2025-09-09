@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Application.Factories;
 
 /// <summary>
-/// DIP: Factory específico para repositorios - invierte dependencias
+/// Factory específico para repositorios - invierte dependencias
 /// Los handlers no dependen de implementaciones concretas
 /// </summary>
 public interface IRepositoryFactory
@@ -15,7 +15,7 @@ public interface IRepositoryFactory
 }
 
 /// <summary>
-/// DIP: Factory para servicios de aplicación
+/// Factory para servicios de aplicación
 /// </summary>
 public interface IApplicationServiceFactory
 {

@@ -6,11 +6,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace Presentation.Controllers;
+namespace TaskManager.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/boards")]
 [Authorize]
+[Tags("Boards")]
 public class BoardsController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -21,150 +22,88 @@ public class BoardsController : ControllerBase
     }
 
     /// <summary>
-    /// CREAR un nuevo tablero
-    /// </summary>
-    [HttpPost]
-    public async Task<ActionResult<BoardDto>> CreateBoard([FromBody] CreateBoardDto boardDto)
-    {
-        try
-        {
-            var userId = GetCurrentUserId();
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
-
-            var command = new CreateBoardCommand(boardDto, userId);
-            var result = await _mediator.Send(command);
-            
-            return CreatedAtAction(nameof(GetBoardById), new { id = result.Id }, result);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
-
-    /// <summary>
-    /// OBTENER un tablero por ID
-    /// </summary>
-    [HttpGet("{id}")]
-    public async Task<ActionResult<BoardDto>> GetBoardById(string id)
-    {
-        try
-        {
-            var userId = GetCurrentUserId();
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
-
-            var query = new GetBoardByIdQuery(id, userId);
-            var board = await _mediator.Send(query);
-
-            if (board == null)
-                return NotFound(new { message = "Tablero no encontrado o sin acceso" });
-
-            return Ok(board);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
-
-    /// <summary>
-    /// OBTENER todos los tableros del usuario
+    /// Obtiene todos los tableros del usuario
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<BoardDto>>> GetUserBoards()
+    [ProducesResponseType(typeof(List<BoardDto>), 200)]
+    public async Task<ActionResult<List<BoardDto>>> GetBoards()
     {
-        try
-        {
-            var userId = GetCurrentUserId();
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
 
-            var query = new GetUserBoardsQuery(userId);
-            var boards = await _mediator.Send(query);
-
-            return Ok(boards);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var query = new GetUserBoardsQuery(userId);
+        var boards = await _mediator.Send(query);
+        return Ok(boards);
     }
 
     /// <summary>
-    /// OBTENER tableros públicos
+    /// Obtiene un tablero por su ID
     /// </summary>
-    [HttpGet("public")]
-    public async Task<ActionResult<IEnumerable<BoardDto>>> GetPublicBoards([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    [HttpGet("{id}")]
+    [ProducesResponseType(typeof(BoardDto), 200)]
+    public async Task<ActionResult<BoardDto>> GetBoardById(string id)
     {
-        try
-        {
-            var query = new GetPublicBoardsQuery(page, pageSize);
-            var boards = await _mediator.Send(query);
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
 
-            return Ok(boards);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var query = new GetBoardByIdQuery(id, userId);
+        var board = await _mediator.Send(query);
+        return board != null ? Ok(board) : NotFound();
     }
 
     /// <summary>
-    /// ACTUALIZAR un tablero
+    /// Crea un nuevo tablero
+    /// </summary>
+    [HttpPost]
+    [ProducesResponseType(typeof(BoardDto), 201)]
+    public async Task<ActionResult<BoardDto>> CreateBoard([FromBody] CreateBoardDto boardDto)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
+        var command = new CreateBoardCommand(boardDto, userId);
+        var result = await _mediator.Send(command) as BoardDto;
+        return CreatedAtAction(nameof(GetBoardById), new { id = result?.Id }, result);
+    }
+
+    /// <summary>
+    /// Actualiza un tablero existente
     /// </summary>
     [HttpPut("{id}")]
+    [ProducesResponseType(typeof(BoardDto), 200)]
     public async Task<ActionResult<BoardDto>> UpdateBoard(string id, [FromBody] UpdateBoardDto boardDto)
     {
-        try
-        {
-            var userId = GetCurrentUserId();
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
 
-            var command = new UpdateBoardCommand(id, boardDto, userId);
-            var result = await _mediator.Send(command);
-
-            if (result == null)
-                return NotFound(new { message = "Tablero no encontrado o sin permisos para actualizar" });
-
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var command = new UpdateBoardCommand(id, boardDto, userId);
+        var result = await _mediator.Send(command);
+        return Ok(result);
     }
 
     /// <summary>
-    /// ELIMINAR un tablero
+    /// Elimina un tablero
     /// </summary>
     [HttpDelete("{id}")]
+    [ProducesResponseType(204)]
     public async Task<ActionResult> DeleteBoard(string id)
     {
-        try
-        {
-            var userId = GetCurrentUserId();
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
 
-            var command = new DeleteBoardCommand(id, userId);
-            var result = await _mediator.Send(command);
-
-            if (!result)
-                return NotFound(new { message = "Tablero no encontrado o sin permisos para eliminar" });
-
-            return Ok(new { message = "Tablero eliminado exitosamente" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var command = new DeleteBoardCommand(id, userId);
+        await _mediator.Send(command);
+        return NoContent();
     }
 
-    private string? GetCurrentUserId()
+    private string GetCurrentUserId()
     {
-        return User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? 
+            throw new UnauthorizedAccessException("Usuario no autenticado");
     }
 }

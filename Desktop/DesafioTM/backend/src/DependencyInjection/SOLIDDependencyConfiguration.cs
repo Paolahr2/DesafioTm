@@ -43,8 +43,10 @@ public static class SOLIDDependencyConfiguration
         services.AddScoped<IUserSearchQueries>(provider => 
             provider.GetRequiredService<LSPCompliantUserRepository>());
 
-        // DIP: Handlers que dependen solo de abstracciones
-        services.AddScoped<DIPCompliantLoginHandler>();
+        // DIP: Application layer handlers
+        services.AddMediatR(cfg => {
+            cfg.RegisterServicesFromAssembly(typeof(Application.Commands.Auth.LoginCommand).Assembly);
+        });
 
         return services;
     }
