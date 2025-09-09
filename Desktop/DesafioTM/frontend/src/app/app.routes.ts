@@ -40,28 +40,28 @@ export const routes: Routes = [
   // Página de inicio de sesión
   {
     path: 'login',
-    loadComponent: () => import('./pages/login-temp.component').then(m => m.LoginTempComponent),
+  loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent),
     canActivate: [guestGuard]
   },
   
   // Página de registro
   {
     path: 'register',
-    loadComponent: () => import('./pages/register-final.component').then(m => m.RegisterFinalComponent),
+  loadComponent: () => import('./pages/register.component').then(m => m.RegisterComponent),
     canActivate: [guestGuard]
   },
   
   // Dashboard principal (requiere autenticación)
   {
     path: 'dashboard',
-    loadComponent: () => import('./pages/dashboard.component').then(m => m.DashboardComponent),
+  loadComponent: () => import('./pages/dashboard-integrated.component').then(m => m.DashboardComponent),
     canActivate: [authGuard]
   },
   
   // Vista detallada del tablero (requiere autenticación)
   {
     path: 'board/:id',
-    loadComponent: () => import('./pages/board-detail.component').then(m => m.BoardDetailComponent),
+    loadComponent: () => import('./pages/board-detail.component').then(c => c.BoardDetailComponent),
     canActivate: [authGuard]
   },
   

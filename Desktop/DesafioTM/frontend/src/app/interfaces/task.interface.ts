@@ -5,7 +5,7 @@
 export enum TaskStatus {
   Pending = 0,     // Pendiente
   InProgress = 1,  // En progreso
-  Completed = 3    // Completado
+  Completed = 2    // Completado
 }
 
 /**

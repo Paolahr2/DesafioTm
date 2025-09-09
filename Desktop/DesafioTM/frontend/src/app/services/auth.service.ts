@@ -5,12 +5,13 @@ import { Observable, BehaviorSubject, throwError } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
 
 import { LoginData, RegisterData, AuthResponse, User } from '../interfaces/user.interface';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:5000/api';
+  private apiUrl = environment.apiUrl;
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
@@ -33,33 +34,43 @@ export class AuthService {
   }
 
   login(loginData: LoginData): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, loginData)
+    return this.http.post<AuthResponse>(`${this.apiUrl}${environment.endpoints.auth}/login`, loginData)
       .pipe(
-        tap(response => {
+        tap((response: AuthResponse) => {
           if (response.token && response.user && isPlatformBrowser(this.platformId)) {
             localStorage.setItem('token', response.token);
             localStorage.setItem('currentUser', JSON.stringify(response.user));
             this.currentUserSubject.next(response.user);
           }
         }),
-        catchError(error => {
+        catchError((error: any) => {
           console.error('Login error:', error);
           return throwError(() => error);
         })
       );
   }
 
-  register(registerData: RegisterData): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/register`, registerData)
+  register(registerData: any): Observable<AuthResponse> {
+    // Transformar fullName a firstName y lastName para el backend
+    const nameParts = registerData.fullName ? registerData.fullName.split(' ') : ['', ''];
+    const backendData = {
+      firstName: nameParts[0] || '',
+      lastName: nameParts.slice(1).join(' ') || '',
+      username: registerData.username,
+      email: registerData.email,
+      password: registerData.password
+    };
+
+    return this.http.post<AuthResponse>(`${this.apiUrl}${environment.endpoints.auth}/register`, backendData)
       .pipe(
-        tap(response => {
+        tap((response: AuthResponse) => {
           if (response.token && response.user && isPlatformBrowser(this.platformId)) {
             localStorage.setItem('token', response.token);
             localStorage.setItem('currentUser', JSON.stringify(response.user));
             this.currentUserSubject.next(response.user);
           }
         }),
-        catchError(error => {
+        catchError((error: any) => {
           console.error('Register error:', error);
           return throwError(() => error);
         })
